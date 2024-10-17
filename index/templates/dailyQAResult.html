@@ -1,0 +1,13 @@
+{% extends "layout.html" %}
+{% block content %}
+  <div class="QAcontent">
+      <h1>NYPC Daily QA for Probeam</h1>
+      <h2>Daily QA Result</h2>
+      {% if results %}
+        {% for result in results %}
+          {{ result|safe }}<br>
+        {% endfor %}
+        <a href = "{{ url_for('dailyQAReport') }}">Download PDF Report</a>
+      {% endif %}
+  </div>
+{% endblock %}

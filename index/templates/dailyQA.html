@@ -1,0 +1,14 @@
+{% extends "layout.html" %}
+{% block content %}
+  <div class = "QAcontent">
+    <h1>Daily QA for Probeam</h1>
+    <p>Description:</p>
+    {% if results %}
+      {% for result in results%}
+        {{ result }}<br>
+      {% endfor %}
+    {% else %}
+	  <p><a href = "{{ url_for('dailyQANew') }}">Add a new Daily QA</a></p>
+    {% endif %}
+  </div>
+{% endblock %}

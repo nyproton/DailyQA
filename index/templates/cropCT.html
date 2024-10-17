@@ -1,0 +1,30 @@
+{% extends "layout.html" %}
+{% block content %}
+  <div class = "QAcontent">
+    <h1>Crop Table for CT Simulation</h1>
+    <p>Description:</p>
+    <table class="table table-bordered table-striped text-center table-sm table-hover">
+        <thead>
+            <tr class="table-primary">
+                <th class="text-center w-50">Patient Name</th>
+                <th class="text-center w-30">Total CT slices</th>
+                <th class="text-center w-20">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if results %}
+                {% for key, value in results.items() %}
+                    <tr>
+                        <td class="text-left w-50">{{ key }}</td>
+                        <td class="text-center w-30">{{ value }}</td>
+                        <td class="text-center w-20">
+                            <button type="button" class="btn btn-primary">Crop!</button>
+                        </td>
+                    </tr>
+                {% endfor %}
+            {% endif %}
+        </tbody>
+    </table>
+
+  </div>
+{% endblock %}

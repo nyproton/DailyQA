@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+	<link rel="stylesheet" href="{{ url_for('static', filename='css/print.css') }}">
+    <title>New York Proton Center - Daily QA Report</title>
+</head>
+<body>
+    <img src="../static/images/NYPClogo.jpg"/>
+    <p><h2 class="text-center">Daily QA Report</h2></p>
+
+    <table class="table table-bordered text-center table-sm table-hover">
+        <tr>
+            <th>Room</th>
+            <td>{{qa.room}}</td>
+            <th>Therapist</th>
+            <td>{{qa.therapist}}</td>
+            <th>Date and Time</th>
+            <td>{{qa.reportDate}}</td>
+        </tr>
+    </table>
+
+    <p><h2><font color="red">Mechanical and Safety Checks</font></h2></p>
+    <table class="table table-bordered table-striped text-center table-sm table-hover">
+        <tr>
+            <th>Door Warning</th>
+            <td>{{qa.doorWarning|safe}}</td>
+            <th>Door Interlock</th>
+            <td>{{qa.doorInterlock|safe}}</td>
+        </tr>
+        <tr>
+            <th>Intercom</th>
+            <td>{{qa.intercom|safe}}</td>
+            <th>Video Monitor</th>
+            <td>{{qa.videoMonitor|safe}}</td>
+        </tr>
+        <tr>
+            <th>Search Button</th>
+            <td>{{qa.searchButton|safe}}</td>
+            <th>Radiation Monitor</th>
+            <td>{{qa.radiationMonitor|safe}}</td>
+        </tr>
+        <tr>
+            <th>Beam Pause</th>
+            <td>{{qa.beamPause|safe}}</td>
+            <th>Collision Interlock</th>
+            <td>{{qa.collisionInterlock|safe}}</td>
+        </tr>
+        <tr>
+            <th>Beam On Indicator</th>
+            <td>{{qa.beamOnIndicator|safe}}</td>
+            <th>X-ray On Indicator</th>
+            <td>{{qa.xrayOnIndicator|safe}}</td>
+        </tr>
+    </table>
+
+    <p><h2>Image alignment with Isocenter crosshair</h2></p>
+    Tolerance is 2mm.<br>
+    <table class="table table-bordered table-striped text-center table-sm table-hover">
+        <tr>
+            <th>Panel-A</th>
+            <td>{{qa.panelA|safe}}</td>
+            <th>Panel-B</th>
+            <td>{{qa.panelB|safe}}</td>
+        </tr>
+        <tr>
+            <th>CBCT-A</th>
+            <td>{{qa.CBCTA|safe}}</td>
+            <th>CBCT-B</th>
+            <td>{{qa.CBCTB|safe}}</td>
+        </tr>
+    </table>
+
+    <p><h2>Laser Alignment</h2></p>
+    Tolerance is 2mm.<br>
+    <table class="table table-bordered table-striped text-center table-sm table-hover">
+        <tr>
+            <th>Laser Sup-Inf</th>
+            <td>{{qa.laserSI|safe}}</td>
+        </tr>
+        <tr>
+            <th>Laser Lt-Rt</th>
+            <td>{{qa.laserRL|safe}}</td>
+        </tr>
+        <tr>
+            <th>Laser Ant-Post</th>
+            <td>{{qa.laserAP|safe}}</td>
+        </tr>
+    </table>
+
+    <p><h2>Matrixx Measurement</h2></p>
+
+    <p><h3>Output</h3></p>
+    Tolerance is: Warning {{ '{:.1f}'.format(qa.outputLevel['Warning'] * 100) }}%; Error {{ '{:.1f}'.format(qa.outputLevel['Fail'] * 100) }}%.<br>
+    <table class="table table-bordered text-center table-sm table-hover">
+        <tr>
+            <th>Output Measurement</th>
+            <td>{{'{:.2f}'.format(qa.output)}}cGy</td>
+            <th>Baseline</th>
+            <td>{{'{:.2f}'.format(qa.baseline['Output'])}}cGy</td>
+            <th>Difference</th>
+            <td>{{'{:.2f}%'.format((qa.output - qa.baseline['Output']) / qa.baseline['Output'] * 100)}}</td>
+            <td>{{qa.outputPass|safe}}</td>
+        </tr>
+    </table>
+
+    <p><h3>Energy</h3></p>
+    Tolerance is: Warning {{ '{:.1f}'.format(qa.energyLevel['Warning'] * 100) }}%; Error {{ '{:.1f}'.format(qa.energyLevel['Fail'] * 100) }}%.   *Note: 6% error represents 0.5mm difference in distal range.<br>
+    <table class="table table-bordered text-center table-sm table-hover">
+        <tr>
+            <th>Energy Measurement</th>
+            <td>{{'{:.2f}'.format(qa.energy)}}cGy</td>
+            <th>Baseline</th>
+            <td>{{'{:.2f}'.format(qa.baseline['Energy'])}}cGy</td>
+            <th>Difference</th>
+            <td>{{'{:.2f}%'.format((qa.energy - qa.baseline['Energy']) / qa.baseline['Energy'] * 100)}}({{'{:.1f}mm'.format((qa.energy - qa.baseline['Energy']) / qa.baseline['Energy'] * 100 / 12)}})</td>
+            <td>{{qa.energyPass|safe}}</td>
+        </tr>
+    </table>
+
+    <p><h3>Profile</h3></p>
+    <table class="table table-bordered table-striped text-center table-sm table-hover">
+        <thead>
+            <tr>
+                <th scope="col">X/Y</th>
+                <th scope="col">Left/Down Penumbra (mm)</th>
+                <th scope="col">Right/Up Penumbra (mm)</th>
+                <th scope="col">Field Size (mm)</th>
+                <th scope="col">Flatness (%)</th>
+                <th scope="col">Symmetry (%)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <th>X</th>
+                {% for prof in qa.profileQA[0] %}
+                <td>{{ '{:.2f}'.format(prof) }}</td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <th>Y</th>
+                {% for prof in qa.profileQA[1] %}
+                <td>{{ '{:.2f}'.format(prof) }}</td>
+                {% endfor %}
+            </tr>
+        </tbody>
+    </table>
+
+    <p><h3>Spots</h3></p>
+    <p><h4>Spots Position</h4></p>
+     Tolerance is: Warning {{ '{:.1f}'.format(qa.spotPositionLevel['Warning']) }}mm; Error {{ '{:.1f}'.format(qa.spotPositionLevel['Fail']) }}mm.
+    <table class="table table-bordered table-striped text-center table-sm table-hover">
+        <thead>
+            <tr>
+                <th scope="col">Energy</th>
+                <th scope="col" colspan="2">Position (mm)</th>
+                <th scope="col" colspan="2">Baseline (mm)</th>
+                <th scope="col" colspan="2">Difference (mm)</th>
+                <th scope="col" colspan="2">Pass or not</th>
+            </tr>
+            <tr>
+                <th scope="col">(MeV)</th>
+                <th scope="col">X Pos</th>
+                <th scope="col">Y Pos</th>
+                <th scope="col">X Pos</th>
+                <th scope="col">Y Pos</th>
+                <th scope="col">X Pos</th>
+                <th scope="col">Y Pos</th>
+                <th scope="col">X Pos</th>
+                <th scope="col">Y Pos</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for i in range(7) %}
+            <tr>
+                <td>{{ '{:d}'.format(qa.energies[i]) }}</td>
+                <td>{{ '{:.2f}'.format(qa.spotQA[i]['XOff']) }}</td>
+                <td>{{ '{:.2f}'.format(qa.spotQA[i]['YOff']) }}</td>
+                <td>{{ '{:.2f}'.format(qa.baseline['SpotQA'][i]['XOff']) }}</td>
+                <td>{{ '{:.2f}'.format(qa.baseline['SpotQA'][i]['YOff']) }}</td>
+                <td>{{ '{:.2f}'.format(qa.spotQA[i]['XOff'] - qa.baseline['SpotQA'][i]['XOff']) }}</td>
+                <td>{{ '{:.2f}'.format(qa.spotQA[i]['YOff'] - qa.baseline['SpotQA'][i]['YOff']) }}</td>
+                <td>{{ qa.spotPositionXPass[i]|safe }}</td>
+                <td>{{ qa.spotPositionYPass[i]|safe }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <p><h4>Spots Size</h4></p>
+    Tolerance is: Warning {{ '{:.1f}'.format(qa.spotSizeLevel['Warning'] * 100) }}%; Error {{ '{:.1f}'.format(qa.spotSizeLevel['Fail'] * 100) }}%.
+    <table class="table table-bordered table-striped text-center table-sm table-hover">
+        <thead>
+            <tr>
+                <th scope="col">Energy</th>
+                <th scope="col" colspan="2">Size (mm)</th>
+                <th scope="col" colspan="2">Baseline (mm)</th>
+                <th scope="col" colspan="2">Difference %</th>
+                <th scope="col" colspan="2">Pass or not</th>
+            </tr>
+            <tr>
+                <th scope="col">(MeV)</th>
+                <th scope="col">X Size</th>
+                <th scope="col">Y Size</th>
+                <th scope="col">X Size</th>
+                <th scope="col">Y Size</th>
+                <th scope="col">X Size</th>
+                <th scope="col">Y Size</th>
+                <th scope="col">X Size</th>
+                <th scope="col">Y Size</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for i in range(7) %}
+            <tr>
+                <td>{{ '{:d}'.format(qa.energies[i]) }}</td>
+                <td>{{ '{:.2f}'.format(qa.spotQA[i]['XSigma']) }}</td>
+                <td>{{ '{:.2f}'.format(qa.spotQA[i]['YSigma']) }}</td>
+                <td>{{ '{:.2f}'.format(qa.baseline['SpotQA'][i]['XSigma']) }}</td>
+                <td>{{ '{:.2f}'.format(qa.baseline['SpotQA'][i]['YSigma']) }}</td>
+                <td>{{ '{:.2f}%'.format((qa.spotQA[i]['XSigma'] - qa.baseline['SpotQA'][i]['XSigma']) /  qa.baseline['SpotQA'][i]['XSigma'] * 100) }}</td>
+                <td>{{ '{:.2f}%'.format((qa.spotQA[i]['YSigma'] - qa.baseline['SpotQA'][i]['YSigma'])  / qa.baseline['SpotQA'][i]['XSigma'] * 100) }}</td>
+                <td>{{ qa.spotSizeXPass[i]|safe }}</td>
+                <td>{{ qa.spotSizeYPass[i]|safe }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <p><h4>Note:</h4></p>
+    <textarea rows="5">{{ qa.note }}</textarea>
+    <p>Mattrix measurement:</p>
+    <img src="{{ url_for('static', filename='dosemap/graph.png') }}">
+</body>
+</html>

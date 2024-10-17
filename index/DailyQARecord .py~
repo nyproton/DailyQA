@@ -1,0 +1,357 @@
+import os
+import datetime
+
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Image, Frame, Spacer, Flowable, PageBreak, Table
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.pagesizes import letter
+
+from io import BytesIO
+from MatrixxUtil import opgread
+from MorningQAAnalysis import checkBackground, checkSpot, checkProfile, checkOutput, checkEnergy, interp2d, \
+    readBaseline, check
+from DailyQAReport import getResults, getReport
+from flask import current_app as app
+from datetime import datetime
+
+import pandas as pd
+
+class DailyQARecord:
+
+
+
+    def __init__(self, r, opgfile):
+
+        # Mechanical and Safety
+        self.room = r["room"]
+        self.therapist = r["therapist"]
+        self.doorWarning = r["doorWarning"]
+        self.doorInterlock = r["doorInterlock"]
+        self.intercom = r["intercom"]
+        self.videoMonitor = r["videoMonitor"]
+        self.searchButton = r["searchButton"]
+        self.radiationMonitor = r["radiationMonitor"]
+        self.beamPause = r["beamPause"]
+
+        # Image
+        self.panelA = r["panelA"]
+        self.panelB = r["panelB"]
+        self.CBCTA = r["CBCTA"]
+        self.CBCTB = r["CBCTB"]
+
+        # Laser
+        self.laserSI = r["laserSI"]
+        self.laserRL = r["laserRL"]
+        self.laserAP = r["laserAP"]
+
+        # Matrixx
+
+        # Baseline
+        self.baseline = readBaseline(self.room)
+
+        # Setup flag
+        self.outputPass = 'Fail'
+        self.energyPass = 'Fail'
+        if 'outputLevel' in r:
+            self.outputLevel = r['outputLevel']
+        else:
+            self.outputLevel = {'Fail': app.config.get('OUTPUT_FAIL'), 'Warning': app.config.get('OUTPUT_WARNING'), 'Relative': True}
+        if 'energyLevel' in r:
+            self.energyLevel = r['energyLevel']
+        else:
+            self.energyLevel = {'Fail': app.config.get('ENERGY_FAIL'), 'Warning': app.config.get('ENERGY_WARNING'), 'Relative': True}
+        self.spotPositionPass = ['Fail'] * 7
+        if 'spotPositionLevel' in r:
+            self.spotPositionLevel = r['spotPositionLevel']
+        else:
+            self.spotPositionLevel = {'Fail': app.config.get('SPOT_POSITION_FAIL'), 'Warning': app.config.get('SPOT_POSITION_WARNING'), 'Relative': False}  # mm
+        self.spotSizePass = ['Fail'] * 7
+        if 'spotSizeLevel' in r:
+            self.spotSizeLevel = r['spotSizeLevel']
+        else:
+            self.spotSizeLevel = {'Fail': app.config.get('SPOT_SIZE_FAIL'), 'Warning': app.config.get('SPOT_SIZE_WARNING'), 'Relative': True}  # %
+
+        # Analyze opg file
+
+        self.filename = opgfile
+        self.reportDate = datetime.fromtimestamp(os.path.getctime(opgfile))
+        self.energies = [240, 210, 180, 160, 140, 110, 80]
+
+        self.xa, self.ya, self.doseArray = opgread(self.filename)
+        xb, yb, db, doseCAX = interp2d(self.xa, self.ya, self.doseArray)
+        # xo, yo, do, doseCAXo = interp2d(xa, ya, self.doseArray, toOrigin=True)
+        self.background = checkBackground(xb, yb, db)
+        self.spotQA = checkSpot(xb, yb, db - self.background) # spotQA.append({'XOff': x, 'YOff': y, 'XSigma': xsigma, 'YSigma': ysigma})
+        self.profileQA = checkProfile(xb, yb, db) # profileQA.append((lp, rp, fs, flatness, symmetry))
+        self.output = checkOutput(xb, yb, db)
+        self.energy = checkEnergy(xb, yb, db)
+
+        # Compare
+        self.outputPass = check(self.output, self.baseline['Output'], self.outputLevel)
+        self.energyPass = check(self.energy, self.baseline['Energy'], self.energyLevel)
+        self.spotPositionXPass = check(pd.DataFrame(self.spotQA)['XOff'].values,
+                                      pd.DataFrame(self.baseline['SpotQA'])['XOff'].values, self.spotPositionLevel)
+        self.spotSizeXPass = check(pd.DataFrame(self.spotQA)['XSigma'].values,
+                                  pd.DataFrame(self.baseline['SpotQA'])['XSigma'].values, self.spotSizeLevel)
+        self.spotPositionYPass = check(pd.DataFrame(self.spotQA)['YOff'].values,
+                                       pd.DataFrame(self.baseline['SpotQA'])['YOff'].values,
+                                       self.spotPositionLevel)
+        self.spotSizeYPass = check(pd.DataFrame(self.spotQA)['YSigma'].values,
+                                   pd.DataFrame(self.baseline['SpotQA'])['YSigma'].values,
+                                   self.spotSizeLevel)
+
+        self.note = r['note']
+        self.mapfname = 'test.png'
+
+    @classmethod
+    def CreateFromResponse(cls, resp, uploadFolder):
+
+        r={}
+        # Mechanical and Safety
+        r['room'] = resp.form.get('selectRoom')
+        r["therapist"] = resp.form.get('inputTherapist')
+        r["doorWarning"] = resp.form.get('checkDoorWarning')
+        r["doorInterlock"] = resp.form.get('checkDoorInterlock')
+        r["intercom"] = resp.form.get('checkIntercom')
+        r["videoMonitor"] = resp.form.get('checkVideoMonitor')
+        r["searchButton"] = resp.form.get('checkSearchButton')
+        r["radiationMonitor"] = resp.form.get('checkRadiationMonitor')
+        r["beamPause"] = resp.form.get('checkBeamPause')
+
+        # Image
+        r["panelA"] = resp.form.get('checkPanelA')
+        r["panelB"] = resp.form.get('checkPanelB')
+        r["CBCTA"] = resp.form.get('checkCBCTA')
+        r["CBCTB"] = resp.form.get('checkCBCTB')
+
+        # Laser
+        r["laserSI"] = resp.form.get('checkLaserSI')
+        r["laserRL"] = resp.form.get('checkLaserRL')
+        r["laserAP"] = resp.form.get('checkLaserAP')
+
+        opgfile = os.path.join(uploadFolder, resp.files["inputfile"].filename)
+
+        # Note
+        r["note"] = resp.form.get('textNote')
+        return DailyQARecord(r, opgfile)
+
+
+    @classmethod
+    def CreateFromFile(cls, opgfile, room, therapist='therapist', r=None):
+
+        if r == None:
+            r = {}
+            # Mechanical and Safety
+            r['room'] = room
+            r["therapist"] = therapist
+            r["doorWarning"] = 'Pass'
+            r["doorInterlock"] = 'Pass'
+            r["intercom"] = 'Pass'
+            r["videoMonitor"] = 'Pass'
+            r["searchButton"] = 'Pass'
+            r["radiationMonitor"] = 'Pass'
+            r["beamPause"] = 'Pass'
+
+            # Image
+            r["panelA"] = 'Pass'
+            r["panelB"] = 'Pass'
+            r["CBCTA"] = 'Pass'
+            r["CBCTB"] = 'Pass'
+
+            # Laser
+            r["laserSI"] = 'Pass'
+            r["laserRL"] = 'Pass'
+            r["laserAP"] = 'Pass'
+
+            # Error/Warning Level
+            r["outputLevel"] = {'Fail': 0.05, 'Warning': 0.03, 'Relative': True}
+            r["energyLevel"] = {'Fail': 0.05, 'Warning': 0.03, 'Relative': True}
+            r["spotPositionLevel"] = {'Fail': 2.0, 'Warning': 1.5, 'Relative': False}
+            r["spotSizeLevel"] = {'Fail': 0.2, 'Warning': 0.1, 'Relative': True}
+
+            # Note
+            r["note"] = ''
+
+        return DailyQARecord(r, opgfile)
+
+
+    def QAResults(self):
+
+        return getResults(self)
+
+
+    def renderReport(self):
+        return getReport(self)
+
+
+#     def GenerateReport(self):
+#
+#         sigmawarning = 0.20
+#         sigmaerror = 0.30
+#
+#         style_sheet = getSampleStyleSheet()
+#
+#         styleH1 = style_sheet['Heading1']
+#         styleH4 = style_sheet['Heading4']
+#         styleBody = style_sheet['BodyText']
+#         logoimg = os.path.dirname(os.path.abspath(__file__)) + '/static/images/NYPClogo.jpg'
+#         im = Image(logoimg, width=222, height=10, hAlign='LEFT')
+#
+#         pdf_buffer = BytesIO()
+#         doc = SimpleDocTemplate(pdf_buffer, pagesize=letter)
+#         flowables = []
+#         flowables.append(im)
+#         flowables.append(Spacer(1, 2))
+#         flowables.append(MCLine(455))
+#
+#         flowables.append(Paragraph("<strong>Daily QA Report for {}</strong>".format(self.room), styleH1))
+#
+#         flowables.append(Paragraph("Operate by: {}".format(self.therapist), styleBody))
+#         flowables.append(
+#             Paragraph("Report Date and Time: {}".format(self.reportDate.strftime('%b-%d%Y %H:%M:%S')), styleBody))
+#
+#         flowables.append(Paragraph("<u>Mechanical and Safety Checks</u>", styleH4))
+#         flowables.append(Paragraph("Door Warning Light: {}".format(ConditionalColor(self.doorWarning)), styleBody))
+#         flowables.append(Paragraph("Door Interlock: {}".format(ConditionalColor(self.doorInterlock)), styleBody))
+#         flowables.append(Paragraph("Intercom: {}".format(ConditionalColor(self.intercom)), styleBody))
+#         flowables.append(Paragraph("Video Monitor: {}".format(ConditionalColor(self.videoMonitor)), styleBody))
+#         flowables.append(Paragraph("Search Button: {}".format(ConditionalColor(self.searchButton)), styleBody))
+#         flowables.append(Paragraph("Radiation Monitor: {}".format(ConditionalColor(self.radiationMonitor)), styleBody))
+#         flowables.append(Paragraph("Beam Pause: {}".format(ConditionalColor(self.beamPause)), styleBody))
+#
+#         flowables.append(Paragraph("<u>Image alignment with Isocenter crosshair (Tolerance is 2mm)</u>", styleH4))
+#         flowables.append(Paragraph("Panel-A: {}".format(ConditionalColor(self.panelA)), styleBody))
+#         flowables.append(Paragraph("Panel-B: {}".format(ConditionalColor(self.panelB)), styleBody))
+#         flowables.append(Paragraph("CBCT-A: {}".format(ConditionalColor(self.CBCTA)), styleBody))
+#         flowables.append(Paragraph("CBCT-B: {}".format(ConditionalColor(self.CBCTB)), styleBody))
+#
+#         flowables.append(Paragraph("<u>Laser Alignment (Tolerance is 2mm)</u>", styleH4))
+#         flowables.append(Paragraph("Sup-Inf Laser: {}".format(ConditionalColor(self.laserSI)), styleBody))
+#         flowables.append(Paragraph("Rt-Lt Laser: {}".format(ConditionalColor(self.laserRL)), styleBody))
+#         flowables.append(Paragraph("Ant-Post Laser: {}".format(ConditionalColor(self.laserAP)), styleBody))
+#
+#         flowables.append(Paragraph("<u>Matrixx Measurement Analysis</u>", styleH4))
+#         flowables.append(
+#             Paragraph("CAX Output: {:.2f}cGy {}".format(self.output, ConditionalColor(self.outputPass)), styleBody))
+#         flowables.append(Paragraph(
+#             "Energy Check: {:.2f}cGy {:.2f}mm {}".format(self.enDose, self.enInmm, ConditionalColor(self.energyPass)),
+#             styleBody))
+#         flowables.append(Paragraph("Spot Check Results:", styleBody))
+#
+#         test = self.spotPositionPass[0]
+#
+#         for i in range(0, 7):
+#             flowables.append(Paragraph("Energy {}MeV: position {}  size {}".format(self.energy[i],
+#                                                                                    ConditionalColor(
+#                                                                                        self.spotPositionPass[i]),
+#                                                                                    ConditionalColor(
+#                                                                                        self.spotSizePass[i])),
+#                                                                                         styleBody))
+#
+#         flowables.append(PageBreak())
+#
+#         flowables.append(im)
+#         flowables.append(Spacer(1, 2))
+#         flowables.append(MCLine(455))
+#
+#         flowables.append(Paragraph("<strong>Daily QA Report for {}</strong>".format(self.room), styleH1))
+#
+#         flowables.append(Paragraph("<u>Profile Analysis</u>", styleH4))
+#         data = []
+#         data.append(['', 'Field Size (cm)', 'Flatness', 'Symmetry', 'Penumbra1', 'Penumbra2'])
+#         data.append(['X profile', '{:.2f}'.format(self.profileX[2]), '{:.2f}'.format(self.profileX[3]),
+#                      '{:.2f}'.format(self.profileX[4]), '{:.2f}'.format(self.profileX[0]),
+#                      '{:.2f}'.format(self.profileX[1])])
+#         data.append(['Y profile', '{:.2f}'.format(self.profileY[2]), '{:.2f}'.format(self.profileY[3]),
+#                      '{:.2f}'.format(self.profileY[4]), '{:.2f}'.format(self.profileY[0]),
+#                      '{:.2f}'.format(self.profileY[1])])
+#         t = Table(data, style=[('GRID', (0, 0), (-1, -1), 1, colors.black), ('ALIGN', (0, 0), (-1, -1), 'CENTER')])
+#         flowables.append(t)
+#         flowables.append(Paragraph("<u>Detail Spot Data</u>", styleH4))
+#
+#         data = []
+#         data.append(
+#             ['Energy\n(MeV)', 'baseline\n(mm)', 'Error Function Fitted (mm)', '', '', '', 'Gaussian Fitted (mm)', '',
+#              '', ''])
+#         data.append(['', '', 'X off', 'Y off', 'Size X', 'Size Y', 'X off', 'Y off', 'Size X', 'Size Y'])
+#
+#         cellf = []
+#         for i in range(0, 7):
+#
+#             data.append(['{}'.format(self.energy[i]), '{:.2f}'.format(self.baseline['sigma'][i]),
+#                          '{:.2f}'.format(self.spotQA[i, 2]), '{:.2f}'.format(self.spotQA[i, 4]),
+#                          '{:.2f}'.format(self.spotQA[i, 3]), '{:.2f}'.format(self.spotQA[i, 5]),
+#                          '{:.2f}'.format(self.spotQA[i, 6]), '{:.2f}'.format(self.spotQA[i, 8]),
+#                          '{:.2f}'.format(self.spotQA[i, 7]), '{:.2f}'.format(self.spotQA[i, 9])])
+#
+#             if abs(self.spotQA[i, 2]) > 1.5:
+#                 cellf.append(('BACKGROUND', (2, i + 2), (2, i + 2), colors.red))
+#             if abs(self.spotQA[i, 4]) > 1.5:
+#                 cellf.append(('BACKGROUND', (3, i + 2), (3, i + 2), colors.red))
+#             if abs(self.spotQA[i, 6]) > 1.5:
+#                 cellf.append(('BACKGROUND', (6, i + 2), (6, i + 2), colors.red))
+#             if abs(self.spotQA[i, 8]) > 1.5:
+#                 cellf.append(('BACKGROUND', (7, i + 2), (7, i + 2), colors.red))
+#
+#             if abs(self.spotQA[i, 3] - self.baseline['sigma'][i]) / self.baseline['sigma'][i] > sigmaerror:
+#                 cellf.append(('BACKGROUND', (4, i + 2), (4, i + 2), colors.red))
+#             if abs(self.spotQA[i, 3] - self.baseline['sigma'][i]) / self.baseline['sigma'][i] > sigmawarning:
+#                 cellf.append(('BACKGROUND', (4, i + 2), (4, i + 2), colors.yellow))
+#             if abs(self.spotQA[i, 5] - self.baseline['sigma'][i]) / self.baseline['sigma'][i] > sigmaerror:
+#                 cellf.append(('BACKGROUND', (5, i + 2), (5, i + 2), colors.red))
+#             if abs(self.spotQA[i, 5] - self.baseline['sigma'][i]) / self.baseline['sigma'][i] > sigmawarning:
+#                 cellf.append(('BACKGROUND', (5, i + 2), (5, i + 2), colors.yellow))
+#             if abs(self.spotQA[i, 7] - self.baseline['sigma'][i]) / self.baseline['sigma'][i] > sigmaerror:
+#                 cellf.append(('BACKGROUND', (8, i + 2), (8, i + 2), colors.red))
+#             if abs(self.spotQA[i, 7] - self.baseline['sigma'][i]) / self.baseline['sigma'][i] > sigmawarning:
+#                 cellf.append(('BACKGROUND', (8, i + 2), (8, i + 2), colors.yellow))
+#             if abs(self.spotQA[i, 9] - self.baseline['sigma'][i]) / self.baseline['sigma'][i] > sigmaerror:
+#                 cellf.append(('BACKGROUND', (9, i + 2), (9, i + 2), colors.red))
+#             if abs(self.spotQA[i, 9] - self.baseline['sigma'][i]) / self.baseline['sigma'][i] > sigmawarning:
+#                 cellf.append(('BACKGROUND', (9, i + 2), (9, i + 2), colors.yellow))
+#
+#         s = [('GRID', (0, 0), (-1, -1), 1, colors.black),
+#              ('SPAN', (0, 0), (0, 1)),
+#              ('SPAN', (1, 0), (1, 1)),
+#              ('SPAN', (2, 0), (5, 0)),
+#              ('SPAN', (6, 0), (9, 0)),
+#              ('ALIGN', (0, 0), (-1, -1), 'CENTER')
+#              ]
+#         s = s + cellf
+#
+#         t = Table(data, style=s)
+#         flowables.append(t)
+#         doc.build(flowables)
+#
+#         return pdf_buffer.getvalue()
+#
+#
+# def ConditionalColor(result):
+#     if result == "Pass" or result == "Functional":
+#         return '<font color="green">{}</font>'.format(result)
+#     if result == "Fail" or result == "Not Functional":
+#         return '<strong><font color="red">{}</font></strong>'.format(result)
+#     if result == "Warning":
+#         return '<strong><font bgcolor="yellow">{}</font></strong>'.format(result)
+#     return result
+#
+#
+# class MCLine(Flowable):
+#
+#     # ----------------------------------------------------------------------
+#     def __init__(self, width, height=0):
+#         Flowable.__init__(self)
+#         self.width = width
+#         self.height = height
+#
+#     # ----------------------------------------------------------------------
+#     def __repr__(self):
+#         return "Line(w=%s)" % self.width
+#
+#     # ----------------------------------------------------------------------
+#     def draw(self):
+#         """
+#         draw the line
+#         """
+#         self.canv.line(0, self.height, self.width, self.height)
+

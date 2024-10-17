@@ -1,0 +1,220 @@
+{% extends "layout.html" %}
+{% block content %}
+    <div class="QAcontent">
+        <h1>NYPC Daily QA for Probeam</h1>
+        <h2>Daily QA List</h2>
+        <p></p>
+        <form id="listForm" class="form" role="form" method="POST" action="/dailyQAList">
+            <div class="form-group">
+                <hr class="style1">
+                <label for="selectRoom" class="col-2 font-weight-bold">Select Room:</label>
+                <select class="custom-select col-2" name="selectRoom" required>
+                  <option value="" disabled {% if room=="" %}selected{% endif %}>Choose...</option>
+                  <option value="TR1" {% if room=="TR1" %}selected{% endif %}>Treatment Room 1</option>
+                  <option value="TR2" {% if room=="TR2" %}selected{% endif %}>Treatment Room 2</option>
+                  <option value="TR3" {% if room=="TR3" %}selected{% endif %}>Treatment Room 3</option>
+                  <option value="TR4" {% if room=="TR4" %}selected{% endif %}>Treatment Room 4</option>
+                </select>
+                <br>
+                <label for="inputStartDate" class="col-2 font-weight-bold">Start Date:</label>
+                <input type="date" class="col-2 form-control" name="inputStartDate" value="{{ startDate }}" required/>
+                <label for="inputEndDate" class="col-2 font-weight-bold">End Date:</label>
+                <input type="date" class="col-2 form-control" name="inputEndDate" value="{{ endDate }}" required/>
+                <br>
+                <label class="col-4 font-weight-bold">Check following to expand the details:</label>
+                <br>
+                <label class="col-2 font-weight-bold">
+                    <input type="checkbox" class="form-check-input text-center" name="checkSafety"
+                           {% if details["safety"] %}checked{% endif %}>Safety
+                </label>
+                <label class="col-2 font-weight-bold">
+                    <input type="checkbox" class="form-check-input text-center" name="checkImage"
+                           {% if details["image"] %}checked{% endif %}>Image
+                </label>
+                <label class="col-2 font-weight-bold">
+                    <input type="checkbox" class="form-check-input text-center" name="checkLaser"
+                           {% if details["laser"] %}checked{% endif %}>Laser
+                </label>
+                <br>
+                <label class="col-2 font-weight-bold">
+                    <input type="checkbox" class="form-check-input text-center" name="checkOutput"
+                           {% if details["output"] %}checked{% endif %}>Output
+                </label>
+                <label class="col-2 font-weight-bold">
+                    <input type="checkbox" class="form-check-input text-center" name="checkEnergy"
+                           {% if details["energy"] %}checked{% endif %}>Energy
+                </label>
+                <br>
+                <label class="col-2 font-weight-bold">
+                    <input type="checkbox" class="form-check-input text-center" name="checkProfile"
+                           {% if details["profile"] %}checked{% endif %}>Profile
+                </label>
+                <label class="col-2 font-weight-bold">
+                    <input type="checkbox" class="form-check-input text-center" name="checkSpotPosition"
+                           {% if details["spotPosition"] %}checked{% endif %}>Spot Position
+                </label>
+                <label class="col-2 font-weight-bold">
+                    <input type="checkbox" class="form-check-input text-center" name="checkSpotSize"
+                           {% if details["spotSize"] %}checked{% endif %}>Spot Size
+                </label>
+                <br>
+                <button type="submit" class="btn btn-primary">Submit</button>
+            </div>
+        </form>
+        <table class="table table-bordered table-striped text-center table-sm table-hover">
+            {% if results %}
+                <tr>
+                    <th>Room</th>
+                    <th>Create Date</th>
+                    {% if details['safety'] %}
+                        <th>Door Warning</th>
+                        <th>Door Interlock</th>
+                        <th>Intercom</th>
+                        <th>Video Monitor</th>
+                        <th>Search Button</th>
+                        <th>Radiation Monitor</th>
+                        <th>Beam Pause</th>
+                        <th>Collision Interlock</th>
+                        <th>Beam On Indicator</th>
+                        <th>X-ray On Indicator</th>
+                    {% else %}
+                        <th>Safety Check</th>
+                    {% endif %}
+                    {% if details['image'] %}
+                        <th>Panel A</th>
+                        <th>Panel B</th>
+                        <th>CBCT A</th>
+                        <th>CBCT B</th>
+                    {% else %}
+                        <th>Image Check</th>
+                    {% endif %}
+                    {% if details['laser'] %}
+                        <th>Laser Sup-Inf</th>
+                        <th>Laser Right-Left</th>
+                        <th>Laser Ant-Post</th>
+                    {% else %}
+                        <th>Laser Check</th>
+                    {% endif %}
+                    {% if details['output'] %}
+                        <th>Output Meas</th>
+                    {% endif %}
+                    <th>Output</th>
+                    {% if details['energy'] %}
+                        <th>Energy Meas</th>
+                    {% endif %}
+                    <th>Energy</th>
+                    {% if details['profile'] %}
+                        <th>Field Size X</th>
+                        <th>Field Size Y</th>
+                        <th>Penumbra Left</th>
+                        <th>Penumbra Right</th>
+                        <th>Penumbra Up</th>
+                        <th>Penumbra Down</th>
+                        <th>Flatness X</th>
+                        <th>Flatness Y</th>
+                        <th>Symmetry X</th>
+                        <th>Symmetry Y</th>
+                    {% endif %}
+                    {% if details['spotPosition'] %}
+                    {% set energyList = results[0]['energies'].split(';') %}
+                        {% for en in energyList %}
+                            <th>Spot Position X - {{ en }}MeV</th>
+                        {% endfor %}
+                        {% for en in energyList %}
+                            <th>Spot Position Y - {{ en }}MeV</th>
+                        {% endfor %}
+                    {% endif %}
+                    <th>Spot Position</th>
+                    {% if details['spotSize'] %}
+                    {% set energyList = results[0]['energies'].split(';') %}
+                        {% for en in energyList %}
+                            <th>Spot Size X - {{ en }}MeV</th>
+                        {% endfor %}
+                        {% for en in energyList %}
+                            <th>Spot Size Y - {{ en }}MeV</th>
+                        {% endfor %}
+                    {% endif %}
+                    <th>Spot Size</th>
+                </tr>
+                {% for result in results %}
+                    <tr>
+                        <td>{{ result['room'] }}</td>
+                        <td>{{ result['createDate'].strftime('%m/%d/%Y') }}</td>
+                        {% if details['safety'] %}
+                            <td>{{ result['doorWarning'] }}</td>
+                            <td>{{ result['doorInterlock'] }}</td>
+                            <td>{{ result['intercom'] }}</td>
+                            <td>{{ result['videoMonitor'] }}</td>
+                            <td>{{ result['searchButton'] }}</td>
+                            <td>{{ result['radiationMonitor'] }}</td>
+                            <td>{{ result['beamPause'] }}</td>
+                            <td>{{ result['collisionInterlock'] }}</td>
+                            <td>{{ result['beamOnIndicator'] }}</td>
+                            <td>{{ result['xrayOnIndicator'] }}</td>
+                        {% else %}
+                            <td>{{ result['safetyCheck'] }}</td>
+                        {% endif %}
+                        {% if details['image'] %}
+                            <td>{{ result['panelA'] }}</td>
+                            <td>{{ result['panelB'] }}</td>
+                            <td>{{ result['CBCTA'] }}</td>
+                            <td>{{ result['CBCTB'] }}</td>
+                        {% else %}
+                            <td>{{ result['imageCheck'] }}</td>
+                        {% endif %}
+                        {% if details['laser'] %}
+                            <td>{{ result['laserSI'] }}</td>
+                            <td>{{ result['laserRL'] }}</td>
+                            <td>{{ result['laserAP'] }}</td>
+                        {% else %}
+                            <td>{{ result['laserCheck'] }}</td>
+                        {% endif %}
+                        {% if details['output'] %}
+                            <td>{{ '%0.2f' % result['output']|float }}</td>
+                        {% endif %}
+                        <td>{{ result['outputPass'] }}</td>
+                        {% if details['energy'] %}
+                            <td>{{ '%0.2f' % result['energy']|float }}</td>
+                        {% endif %}
+                        <td>{{ result['energyPass'] }}</td>
+                        {% if details['profile'] %}
+                            <td>{{ '%0.2f' % result['fieldSizeX']|float }}</td>
+                            <td>{{ '%0.2f' % result['fieldSizeY']|float }}</td>
+                            <td>{{ '%0.2f' % result['leftPenumbra']|float }}</td>
+                            <td>{{ '%0.2f' % result['rightPenumbra']|float }}</td>
+                            <td>{{ '%0.2f' % result['upPenumbra']|float }}</td>
+                            <td>{{ '%0.2f' % result['downPenumbra']|float }}</td>
+                            <td>{{ '%0.2f' % result['flatnessX']|float }}</td>
+                            <td>{{ '%0.2f' % result['flatnessY']|float }}</td>
+                            <td>{{ '%0.2f' % result['symmetryX']|float }}</td>
+                            <td>{{ '%0.2f' % result['symmetryY']|float }}</td>
+                        {% endif %}
+                        {% if details['spotPosition'] %}
+                            {% set spotXOffList = result['spotXOff'].split(';') %}
+                            {% for XOff in spotXOffList %}
+                                <td>{{ '%0.2f' % XOff|float }}</td>
+                            {% endfor %}
+                            {% set spotYOffList = result['spotYOff'].split(';') %}
+                            {% for YOff in spotYOffList %}
+                                <td>{{ '%0.2f' % YOff|float }}</td>
+                            {% endfor %}
+                        {% endif %}
+                        <td>{{ result['spotPositionCheck'] }}</td>
+                        {% if details['spotSize'] %}
+                            {% set spotXSizeList = result['spotXSigma'].split(';') %}
+                            {% for XSize in spotXSizeList %}
+                                <td>{{ '%0.2f' % XSize|float }}</td>
+                            {% endfor %}
+                            {% set spotYSizeList = result['spotYSigma'].split(';') %}
+                            {% for YSize in spotYSizeList %}
+                                <td>{{ '%0.2f' % YSize|float }}</td>
+                            {% endfor %}
+                        {% endif %}
+                        <td>{{ result['spotSizeCheck'] }}</td>
+                    </tr>
+                {% endfor %}
+            {% endif %}
+        </table>
+    </div>
+
+{% endblock %}

@@ -1,0 +1,307 @@
+{% extends "layout.html" %}
+{% block content %}
+  <div class="QAcontent">
+    <h1>NYPC Daily QA for Probeam</h1>
+    <p>Create New Daily QA Report</p>
+	  <form class="form" role="form" method="POST" action="/dailyQAResult" enctype=multipart/form-data>
+	    <div class="form-group">
+        <hr class="style1">
+        <label for="selectRoom" class="col-2 font-weight-bold">Select Room:</label>
+        <select class="custom-select col-2" name="selectRoom" required>
+          <option value="">Choose...</option>
+          <option value="TR1">Treatment Room 1</option>
+          <option value="TR2">Treatment Room 2</option>
+          <option value="TR3">Treatment Room 3</option>
+          <option value="TR4">Treatment Room 4</option>
+        </select>
+        <br>
+        <label for="inputTherapist" class="col-2 font-weight-bold">Therapist:</label>
+        <input type="text" class="col-2" name="inputTherapist" placeholder="Therapist" required>
+
+        <hr class="style1">
+        <p><h1>Mechanical and Safety Checks</h1></p>
+        <table class="table table-bordered table-striped text-center table-sm table-hover">
+          <thead>
+            <tr class="table-primary">
+              <th class = "text-center w-25">Item to check</th>
+              <th colspan=2 class="text-center w-25">Functional or Not</th>
+              <th class = "text-center w-25">Item to check</th>
+              <th colspan=2 class="text-center w-25">Functional or Not</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row" class="text-center">Door Warning</th>
+              <td>
+                <label class="form-check-label text-success">
+                  <input type="radio" class="form-check-input" name="checkDoorWarning" value="Pass" required checked>Yes
+                </label>
+              </td>
+              <td>
+                <label class="form-check-label text-danger">
+                  <input type="radio" class="form-check-input" name="checkDoorWarning" value="Fail" required>No
+                </label>
+              </td>
+              <th scope="row" class="text-center">Door Interlock</th>
+              <td>
+                <label class="form-check-label text-success">
+                  <input type="radio" class="form-check-input" name="checkDoorInterlock" value="Pass" required checked>Yes
+                </label>
+              </td>
+              <td>
+                <label class="form-check-label text-danger">
+                  <input type="radio" class="form-check-input" name="checkDoorInterlock" value="Fail" required>No
+                </label>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" class="text-center">Intercom</th>
+              <td>
+                <label class="form-check-label text-success">
+                  <input type="radio" class="form-check-input" name="checkIntercom" value="Pass" required checked>Yes
+                </label>
+              </td>
+              <td>
+                <label class="form-check-label text-danger">
+                  <input type="radio" class="form-check-input" name="checkIntercom" value="Fail" required>No
+                </label>
+              </td>
+              <th scope="row" class="text-center">Video Monitor</th>
+              <td>
+                <label class="form-check-label text-success">
+                  <input type="radio" class="form-check-input" name="checkVideoMonitor" value="Pass" required checked>Yes
+                </label>
+              </td>
+              <td>
+                <label class="form-check-label text-danger">
+                  <input type="radio" class="form-check-input" name="checkVideoMonitor" value="Fail" required>No
+                </label>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" class="text-center">Search Button</th>
+              <td>
+                <label class="form-check-label text-success">
+                  <input type="radio" class="form-check-input" name="checkSearchButton" value="Pass" required checked>Yes
+                </label>
+              </td>
+              <td>
+                <label class="form-check-label text-danger">
+                  <input type="radio" class="form-check-input" name="checkSearchButton" value="Fail" required>No
+                </label>
+              </td>
+              <th scope="row" class="text-center">Radiation Monitor</th>
+              <td>
+                <label class="form-check-label text-success">
+                  <input type="radio" class="form-check-input" name="checkRadiationMonitor" value="Pass" required checked>Yes
+                </label>
+              </td>
+              <td>
+                <label class="form-check-label text-danger">
+                  <input type="radio" class="form-check-input" name="checkRadiationMonitor" value="Fail" required>No
+                </label>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" class="text-center">Beam Pause</th>
+              <td>
+                <label class="form-check-label text-success">
+                  <input type="radio" class="form-check-input" name="checkBeamPause" value="Pass" required checked>Yes
+                </label>
+              </td>
+              <td>
+                <label class="form-check-label text-danger">
+                  <input type="radio" class="form-check-input" name="checkBeamPause" value="Fail" required>No
+                </label>
+              </td>
+              <th scope="row" class="text-center">Collision Interlock</th>
+              <td>
+                  <label class="form-check-label text-success">
+                    <input type="radio" class="form-check-input" name="checkCollisionInterlock" value="Pass" required checked>Yes
+                  </label>
+              </td>
+              <td>
+                  <label class="form-check-label text-danger">
+                    <input type="radio" class="form-check-input" name="checkCollisionInterlock" value="Fail" required>No
+                  </label>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" class="text-center">Beam On Indicator</th>
+              <td>
+                <label class="form-check-label text-success">
+                  <input type="radio" class="form-check-input" name="checkBeamOnIndicator" value="Pass" required checked>Yes
+                </label>
+              </td>
+              <td>
+                <label class="form-check-label text-danger">
+                  <input type="radio" class="form-check-input" name="checkBeamOnIndicator" value="Fail" required>No
+                </label>
+              </td>
+              <th scope="row" class="text-center">X-ray On Indicator</th>
+              <td>
+                  <label class="form-check-label text-success">
+                    <input type="radio" class="form-check-input" name="checkXrayOnIndicator" value="Pass" required checked>Yes
+                  </label>
+              </td>
+              <td>
+                  <label class="form-check-label text-danger">
+                    <input type="radio" class="form-check-input" name="checkXrayOnIndicator" value="Fail" required>No
+                  </label>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        
+        <hr class="style1">
+        <p><h1>Image alignment with Isocenter crosshair</h1></p>
+        <p>Tolerance is 2mm.</p>
+        <table class="table table-bordered table-striped text-center table-sm table-hover">
+          <thead>
+            <tr class="table-primary">
+              <th class = "text-center w-15">Item to check</th>
+              <th colspan=6 class="text-center w-35">Pass or Fail</th>
+              <th class = "text-center w-15">Item to check</th>
+              <th colspan=6 class="text-center w-35">Pass or Fail</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row" class="text-center">Panel-A</th>
+              <td colspan=3>
+                <label class="form-check-label text-success">
+                  <input type="radio" class="form-check-input" name="checkPanelA" value="Pass" required checked>Pass
+                </label>
+              </td>
+              <td colspan=3>
+                <label class="form-check-label text-danger">
+                  <input type="radio" class="form-check-input" name="checkPanelA" value="Fail" required>Fail
+                </label>
+              </td>
+              <th scope="row" class="text-center">Panel-B</th>
+              <td colspan=3>
+                <label class="form-check-label text-success">
+                  <input type="radio" class="form-check-input" name="checkPanelB" value="Pass" required checked>Pass
+                </label>
+              </td>
+              <td colspan=3>
+                <label class="form-check-label text-danger">
+                  <input type="radio" class="form-check-input" name="checkPanelB" value="Fail" required>Fail
+                </label>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" class="text-center">CBCT-A</th>
+              <td colspan=2>
+                <label class="form-check-label text-success">
+                  <input type="radio" class="form-check-input" name="checkCBCTA" value="Pass" required>Pass
+                </label>
+              </td>
+              <td colspan=2>
+                <label class="form-check-label text-warning">
+                  <input type="radio" class="form-check-input" name="checkCBCTA" value="NA" required checked>Not Checked
+                </label>
+              </td>
+              <td colspan=2>
+                <label class="form-check-label text-danger">
+                  <input type="radio" class="form-check-input" name="checkCBCTA" value="Fail" required>Fail
+                </label>
+              </td>
+              <th scope="row" class="text-center">CBCT-B</th>
+              <td colspan=2>
+                <label class="form-check-label text-success">
+                  <input type="radio" class="form-check-input" name="checkCBCTB" value="Pass" required>Pass
+                </label>
+              </td>
+              <td colspan=2>
+                <label class="form-check-label text-warning">
+                  <input type="radio" class="form-check-input" name="checkCBCTB" value="NA" required checked>Not Checked
+                </label>
+              </td>
+              <td colspan=2>
+                <label class="form-check-label text-danger">
+                  <input type="radio" class="form-check-input" name="checkCBCTB" value="Fail" required>Fail
+                </label>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        
+        <hr class="style1">
+        <p><h1>Laser Alignment</h1></p>
+        <p>Tolerance is 2mm.</p>
+        <table class="table table-bordered table-striped text-center table-sm table-hover">
+          <thead>
+            <tr class="table-primary">
+              <th class = "text-center w-25">Item to check</th>
+              <th colspan=2 class="text-center w-25">Pass or Fail</th>
+              <th class = "text-center w-25"></th>
+              <th colspan=2 class="text-center w-25"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row" class="text-center">Sup-Inf</th>
+              <td>
+                <label class="form-check-label text-success">
+                  <input type="radio" class="form-check-input" name="checkLaserSI" value="Pass" required checked>Pass
+                </label>
+              </td>
+              <td>
+                <label class="form-check-label text-danger">
+                  <input type="radio" class="form-check-input" name="checkLaserSI" value="Fail" required>Fail
+                </label>
+              </td>
+              <td></td>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr>
+              <th scope="row" class="text-center">Rt-Lt</th>
+              <td>
+                <label class="form-check-label text-success">
+                  <input type="radio" class="form-check-input" name="checkLaserRL" value="Pass" required checked>Pass
+                </label>
+              </td>
+              <td>
+                <label class="form-check-label text-danger">
+                  <input type="radio" class="form-check-input" name="checkLaserRL" value="Fail" required>Fail
+                </label>
+              </td>
+              <td></td>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr>
+              <th scope="row" class="text-center">Ant-Post</th>
+              <td>
+                <label class="form-check-label text-success">
+                  <input type="radio" class="form-check-input" name="checkLaserAP" value="Pass" required checked>Pass
+                </label>
+              </td>
+              <td>
+                <label class="form-check-label text-danger">
+                  <input type="radio" class="form-check-input" name="checkLaserAP" value="Fail" required>Fail
+                </label>
+              </td>
+              <td></td>
+              <td></td>
+              <td></td>
+            </tr>
+          </tbody>
+        </table>
+        
+        <hr class="style1">
+        <p><h1>Matrixx Measurement Analysis</h1></p>
+        
+        <label for = "inputfile">Choose File to analysis</label>
+        <input type = "file" name = "inputfile" id="inputfile" accept=".opg" required>
+        
+        <hr class="style1">
+        <p><h1>Note</h1></p>
+        <textarea name="textNote" class="form-control" rows="5"></textarea>
+	    </div>
+	    <button type="submit" class="btn btn-primary">Submit</button>
+	  </form>
+  </div>
+{% endblock %}

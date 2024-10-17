@@ -1,0 +1,60 @@
+{% extends "layout.html" %}
+{% block content %}
+    <div class="Baseline">
+        <h1>Baseline</h1>
+        <hr class="style1">
+        <form id="listForm" class="form" role="form" method="POST" action="/dailyQABaseline">
+            <label for="selectRoom" class="col-2 font-weight-bold">Select Room:</label>
+            <select class="custom-select col-2" name="selectRoom" required>
+                <option value="" disabled {% if room=="" %}selected{% endif %}>Choose...</option>
+                <option value="TR1" {% if room=="TR1" %}selected{% endif %}>Treatment Room 1</option>
+                <option value="TR2" {% if room=="TR2" %}selected{% endif %}>Treatment Room 2</option>
+                <option value="TR3" {% if room=="TR3" %}selected{% endif %}>Treatment Room 3</option>
+                <option value="TR4" {% if room=="TR4" %}selected{% endif %}>Treatment Room 4</option>
+            </select>
+            <div class="form-group">
+                <label for="inputOutput" class="col-2 font-weight-bold">Output:</label>
+                <input type="text" class="form-control" name="inputOutput"
+                       {% if data %} value="{{ '%0.2f' % data['Output']|float }}" {% endif %} readonly>
+            </div>
+            <div class="form-group">
+                <label for="inputEnergy" class="col-2 font-weight-bold">Energy:</label>
+                <input type="text" class="form-control" name="inputEnergy"
+                       {% if data %} value="{{ '%0.2f' % data['Energy']|float }}" {% endif %} readonly>
+            </div>
+            <div class="form-group">
+                {% if data %}
+                <label class="col-2 font-weight-bold">Spot QA</label>
+                <hr class="style1">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Energy(MeV)</th>
+                            <th>X Off</th>
+                            <th>Y Off</th>
+                            <th>X Sigma</th>
+                            <th>Y Sigma</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% set spotQAs = data['SpotQA'] %}
+                    {% set ens = [240, 210, 180, 160, 140, 110, 80] %}
+                    {% for spotQA, en in spotQAs|zip(ens) %}
+                        <tr>
+                            <td>{{ en }}</td>
+                            <td>{{ '%0.2f' % spotQA['XOff']|float }}</td>
+                            <td>{{ '%0.2f' % spotQA['YOff']|float }}</td>
+                            <td>{{ '%0.2f' % spotQA['XSigma']|float }}</td>
+                            <td>{{ '%0.2f' % spotQA['YSigma']|float }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                {% endif %}
+            </div>
+
+            <br>
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+    </div>
+{% endblock %}

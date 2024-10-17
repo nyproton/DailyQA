@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+	<link rel="stylesheet" href="{{ url_for('static', filename='css/print.css') }}">
+    <title>New York Proton Center - Daily QA Setup / Physicist ONLY</title>
+</head>
+<body>
+    <h1>Daily QA Setup</h1>
+    <h3>Physicist ONLY!</h3>
+    <form class="form" role="form" method="POST" action="/dailyQASetup">
+        <p><h2>Daily QA Parameters Setup</h2></p>
+        <div class="form-group row">
+            <label for="OutputWarning" class="col-sm-2 col-form-label text-right">Output Warning(%)</label>
+            <div class="col-sm-1">
+                <input type="number" step=0.1 class="form-control" {{ 'readonly' if reqPost }} name="OutputWarning" value={{config['OUTPUT_WARNING'] * 100}}>
+            </div>
+        </div>
+        <div class="form-group row">
+            <label for="OutputFail" class="col-sm-2 col-form-label text-right">Output Fail(%)</label>
+            <div class="col-sm-1">
+                <input type="number" step=0.1 class="form-control" {{ 'readonly' if reqPost }} name="OutputFail" value={{config['OUTPUT_FAIL'] * 100}}>
+            </div>
+        </div>
+        <div class="form-group row">
+            <label for="EnergyWarning" class="col-sm-2 col-form-label text-right">Energy Warning(%)</label>
+            <div class="col-sm-1">
+                <input type="number" step=0.1 class="form-control" {{ 'readonly' if reqPost }} name="EnergyWarning" value={{config['ENERGY_WARNING'] * 100}}>
+            </div>
+        </div>
+        <div class="form-group row">
+            <label for="EnergyFail" class="col-sm-2 col-form-label text-right">Energy Fail(%)</label>
+            <div class="col-sm-1">
+                <input type="number" step=0.1 class="form-control" {{ 'readonly' if reqPost }} name="EnergyFail" value={{config['ENERGY_FAIL'] * 100}}>
+            </div>
+        </div>
+        <div class="form-group row">
+            <label for="SpotPositionWarning" class="col-sm-2 col-form-label text-right">Spot Position Warning(mm)</label>
+            <div class="col-sm-1">
+                <input type="number" step=0.1 class="form-control" {{ 'readonly' if reqPost }} name="SpotPositionWarning" value={{config['SPOT_POSITION_WARNING']}}>
+            </div>
+        </div>
+        <div class="form-group row">
+            <label for="SpotPositionFail" class="col-sm-2 col-form-label text-right">Spot Position Fail(mm)</label>
+            <div class="col-sm-1">
+                <input type="number" step=0.01 class="form-control" {{ 'readonly' if reqPost }} name="SpotPositionFail" value={{config['SPOT_POSITION_FAIL']}}>
+            </div>
+        </div>
+        <div class="form-group row">
+            <label for="SpotSizeWarning" class="col-sm-2 col-form-label text-right">Spot Size Warning(%)</label>
+            <div class="col-sm-1">
+                <input type="number" step=0.01 class="form-control" {{ 'readonly' if reqPost }} name="SpotSizeWarning" value={{config['SPOT_SIZE_WARNING'] * 100}}>
+            </div>
+        </div>
+        <div class="form-group row">
+            <label for="SpotSizeFail" class="col-sm-2 col-form-label text-right">Spot Size Fail(%)</label>
+            <div class="col-sm-1">
+                <input type="number" step=0.1 class="form-control" {{ 'readonly' if reqPost }} name="SpotSizeFail" value={{config['SPOT_SIZE_FAIL'] * 100}}>
+            </div>
+        </div>
+        {% if reqPost %}
+        <h4 class="text-info">The parameters were saved.</h4>
+        {% else %}
+        <button type="submit" class="btn btn-primary">Submit</button>
+        {% endif %}
+    </form>
+</body>
+</html>
