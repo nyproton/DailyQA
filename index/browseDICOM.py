@@ -6,8 +6,8 @@ import pandas
 
 def browseDICOM(dicom_folder):
     netdomain = 'nyproton.com'
-    netuser = 'francisyu'
-    netpass = 'Proton2018@'
+    netuser = 'user'
+    netpass = 'pass'
     drive = '//10.11.120.7/va_data$/DICOM'
     cmd = r'net use {} /del'.format(drive)
     subprocess.call(cmd, shell=True)
